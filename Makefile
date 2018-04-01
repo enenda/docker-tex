@@ -16,9 +16,15 @@ help:
 	@echo "\t\tcreated image."
 	@echo "\t\tExample: ARGS='pdftex doc.tex' make run"
 	@echo ""
+	@echo "\t\tExample where target tex file does not reside in current directory: "
+	@echo "\t\t\tDIR=/path/to/cv ARGS='pdftex doc.tex' make run"
+	@echo ""
 	@echo "	- watch: uses the python module when-changed watching the changes of a"
 	@echo "\t\tgiven file passed executing a given command (ideally a typesetting engine)"
 	@echo "\t\tExample: FILE=cv.tex ENGINE=xelatex make watch"
+	@echo ""
+	@echo "\t\tExample where target tex file does not reside in current directory: "
+	@echo "\t\t\tDIR=/path/to/cv FILE=cv.tex ENGINE=xelatex make watch"
 	@echo ""
 	@echo "\t\tNote that a file and an engine must be passed. Otherwise it won't work"
 	@echo ""
@@ -29,12 +35,17 @@ build:
 
 .PHONY: run
 run: env-ARGS
+	if [ "${DIR}" = "" ]; then \
+		DIR=$(shell pwd); \
+	fi
+
 	docker run --rm \
 		--user="$(shell id -u):$(shell id -g)" \
-		-v $(shell pwd):/home/tex \
+		-v ${DIR}:/home/tex \
 		${IMAGE} ${ARGS}
 
 # run by "FILE=cv.tex ENGINE=xelatex make watch"
+# or "DIR=/path/to/cv/ FILE=cv.tex ENGINE=xelatex make watch"
 .PHONY: watch
 watch: env-FILE env-ENGINE
 	if [ "${WHEN_CHANGED_VERSION}" = "" ]; then \
@@ -42,7 +53,11 @@ watch: env-FILE env-ENGINE
 		exit 1; \
 	fi
 
-	when-changed ${FILE} "make run ARGS='${ENGINE} ${FILE}'"
+	if [ "${DIR}" = "" ]; then \
+		DIR=$(shell pwd); \
+	fi
+
+	when-changed ${DIR}/${FILE} "make run ARGS='${ENGINE} ${FILE}'"
 
 # environmental var guard which protects rules
 # kudos to https://stackoverflow.com/a/7367903
