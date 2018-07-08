@@ -17,14 +17,11 @@ help:
 	@echo "\t\tExample: ARGS='pdftex doc.tex' make run"
 	@echo ""
 	@echo "\t\tExample where target tex file does not reside in current directory: "
-	@echo "\t\t\tDIR=/path/to/cv ARGS='pdftex doc.tex' make run"
+	@echo "\t\t\tDIR=/path/to/dir ARGS='pdftex file.tex' make run"
 	@echo ""
 	@echo "	- watch: uses the python module when-changed watching the changes of a"
 	@echo "\t\tgiven file passed executing a given command (ideally a typesetting engine)"
-	@echo "\t\tExample: FILE=cv.tex ENGINE=xelatex make watch"
-	@echo ""
-	@echo "\t\tExample where target tex file does not reside in current directory: "
-	@echo "\t\t\tDIR=/path/to/cv FILE=cv.tex ENGINE=xelatex make watch"
+	@echo "\t\tExample: DIR=/path/to/dir/ FILE=file.tex ENGINE=xelatex make watch"
 	@echo ""
 	@echo "\t\tNote that a file and an engine must be passed. Otherwise it won't work"
 	@echo ""
@@ -35,7 +32,7 @@ build:
 
 .PHONY: run
 run: env-ARGS
-	if [ "${DIR}" = "" ]; then \
+	@if [ "${DIR}" = "" ]; then \
 		DIR=$(shell pwd); \
 	fi
 
@@ -44,25 +41,24 @@ run: env-ARGS
 		-v ${DIR}:/home/tex \
 		${IMAGE} ${ARGS}
 
-# run by "FILE=cv.tex ENGINE=xelatex make watch"
-# or "DIR=/path/to/cv/ FILE=cv.tex ENGINE=xelatex make watch"
+# run by "DIR=/path/to/dir/ FILE=file.tex ENGINE=xelatex make watch"
 .PHONY: watch
 watch: env-FILE env-ENGINE
-	if [ "${WHEN_CHANGED_VERSION}" = "" ]; then \
+	@if [ "${WHEN_CHANGED_VERSION}" = "" ]; then \
 		echo "[ERROR] when-changed appears to be not found in your system"; \
 		exit 1; \
 	fi
 
-	if [ "${DIR}" = "" ]; then \
+	@if [ "${DIR}" = "" ]; then \
 		DIR=$(shell pwd); \
 	fi
 
-	when-changed ${DIR}/${FILE} "make run ARGS='${ENGINE} ${FILE}'"
+	@when-changed ${DIR}/*.tex -c "make run ARGS='${ENGINE} ${FILE}'"
 
 # environmental var guard which protects rules
 # kudos to https://stackoverflow.com/a/7367903
 env-%: ENV
-	if [ "${${*}}" = "" ]; then \
+	@if [ "${${*}}" = "" ]; then \
 		echo "[ERROR] Environment variable $* not set"; \
 		exit 1; \
 	fi
